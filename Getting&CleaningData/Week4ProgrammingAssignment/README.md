@@ -3,6 +3,7 @@
 ### Week4 Programming Assignment
 
 __As the course coding project, this script (run_analysis.R) serves to:__
+
 1. Download the raw dataset as 'SamsungGalaxy5.zip', into `./data/` folder, if none of above exists.
 
 2. Extract activity labels and features from `activity_labels.txt` and `features.txt` respectively; rename the characters properly.

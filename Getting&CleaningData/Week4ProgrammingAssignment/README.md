@@ -4,13 +4,21 @@
 
 As the course coding project, this script (run_analysis.R) serves to:
 1. Download the raw dataset as 'SamsungGalaxy5.zip', into '\./data/' folder, if none of above exists. 1
+
 2. Extract activity labels and features from 'activity_labels.txt' and 'features.txt' respectively; rename the characters properly. 2
+
 3. Load data from training and test datasets respectively, and select the variables of mean and standard deviation only. 3
+
 4. Merge the datasets with the corresponding activity labels and subjects. 4
+
 5. Merge the two datasets, and names each column variable with the proper activity lable. 5
+
 6. Convert 'Activity' and'Subject' variables into factors. 6
+
 7. Make new dataset containing averages of each measurement variable, by combinations of each 'Activity' and each 'Subject' (volunteer). 7
+
 8. Output the dataset obtained from Step 7 into 'TidySummary.txt' file under the '\./data/' folder. 8
+
 9. Reset the working directory the same as the beginning. 9
 
 Final note: The work starts from and ends at current working directory, where all files, including the final 'TidySummary.txt' output, stored in '\./data/' folder.

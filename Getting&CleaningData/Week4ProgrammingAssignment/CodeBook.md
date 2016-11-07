@@ -1,16 +1,16 @@
 # Code Book
 
-This code book lists the name and functions of each column variable in the 'TidySummary.txt' dataset.
+__This code book lists the name and functions of each column variable in the `TidySummary.txt` dataset.__
 
 ## Classifiers:
-* 'Subject': IDs of the test volunteers (subject), ranging from 1~30.
-* 'Activity': Measurement results (in average) of each type of activity:
-**  'Walking (1)' - walking during the test.
-**  'WalkingUpstairs (2)' - walking upstairs during the test.
-**  'WalkingDownstairs (3)' - walking downstairs during the test.
-**  'Sitting (4)' - sitting during the test.
-**  'Standing (5)' - standing during the test.
-**  'Laying (6)' - laying down during the test.
+* `Subject`: IDs of the test volunteers (subject), ranging from 1~30.
+* `Activity`: Measurement results (in average) of each type of activity:
+ *  `Walking (1)` - walking during the test.
+ *  `WalkingUpstairs (2)` - walking upstairs during the test.
+ *  `WalkingDownstairs (3)` - walking downstairs during the test.
+ *  `Sitting (4)` - sitting during the test.
+ *  `Standing (5)` - standing during the test.
+ *  `Laying (6)` - laying down during the test.
 
 ## Measurements:
 * `tBodyAccMeanX`
@@ -81,12 +81,12 @@ This code book lists the name and functions of each column variable in the 'Tidy
 * `fBodyBodyGyroJerkMagStd`
 
 ### Notes for Abbreviations of Measurements:
-**  't' - time domain.
-**  'f' - frequency domain from FFT.
-**  'Body' - Body signal.
-**  'Gravity' - Gravity signal.
-**  'Acc' - Accelerometer signal.
-**  'Gyro' - Gyroscope signal.
-**  'Jerk' - Jerk signal.
-**  'Mag' - Magnitude signals.
-**  'X/Y/Z' - Signal of one of X/Y/Z cartisan axes.
+ *  `t` - time domain.
+ *  `f` - frequency domain from FFT.
+ *  `Body` - Body signal.
+ *  `Gravity` - Gravity signal.
+ *  `Acc` - Accelerometer signal.
+ *  `Gyro` - Gyroscope signal.
+ *  `Jerk` - Jerk signal.
+ *  `Mag` - Magnitude signals.
+ *  `X/Y/Z` - Signal of one of X/Y/Z cartisan axes.

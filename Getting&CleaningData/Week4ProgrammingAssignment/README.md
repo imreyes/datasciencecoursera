@@ -16,10 +16,10 @@ __As the course coding project, this script (run_analysis.R) serves to:__
 
 6. Convert `Activity` and `Subject` variables into factors.
 
-7. Make new dataset containing averages of each measurement variable, by combinations of each `Activity` and each 'Subject' (volunteer).
+7. Make new dataset containing averages of each measurement variable, by combinations of each `Activity` and each `Subject` (volunteer).
 
-8. Output the dataset obtained from Step 7 into 'TidySummary.txt' file under the `./data/` folder.
+8. Output the dataset obtained from Step 7 into `TidySummary.txt` file under the `./data/` folder.
 
 9. Reset the working directory the same as the beginning.
 
-__Final note:__ The work starts from and ends at current working directory, where all files, including the final 'TidySummary.txt' output, stored in `./data/` folder.
+__Final note:__ The work starts from and ends at current working directory, where all files, including the final `TidySummary.txt` output, stored in `./data/` folder.

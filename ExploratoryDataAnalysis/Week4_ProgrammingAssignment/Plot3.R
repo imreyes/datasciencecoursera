@@ -7,6 +7,7 @@
 # Data source: EPA air pollution data - fine particle pollution.
 
 # Unwrapping and loading data.
+library(ggplot2)
 unzip('exdata-data-NEI_data.zip')
 # The below variables are used per instructed.
 NEI <- readRDS("summarySCC_PM25.rds")

@@ -1,0 +1,245 @@
+---
+title: "Are You Doing All Right: Predicting Exercise Manner"
+author: "Guang Yang"
+date: "November 29, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+Portable digital devices, such as Jawbone Up, Nike FuelBand, and Fitbit, are now very good at collecting gigantic amount of data from the consumers regarding their personal activity, in a relatively cheap way.
+
+In addition to recording jogging distance, calories burned, heart rate, etc., the majority of data can also potentially monitor or predict the quality of the exercises. However, the quality analyses from the movement data are more challenging, as they involve knowledge of many aspects, and use sophisticated models.
+
+In this project, a dataset generously offered by the group of enthusiasts who measured their exercise activities, and labeled with 5 pattern marks (A-E). This training set is used to build a machine learning prediction model, and to predict a bunch of unknown cases in the test set.
+
+## Loading and Cleaning Data
+
+The [training](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv) and [testing](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv) sets are downloaded from [HAR website](http://groupware.les.inf.puc-rio.br/har). The author greatly respect and appreciate the generous sharing of the datasets.
+
+Both datasets have identical features, except for the last, `classe` in training and `problem_id` in testing. In the training set, `classe` variable is the real classification of exercise patterns, and all others can potentially be predictors. However, the datasets contain some features with lots of NAs - and completely empty in the test set; hence these features are removed. Also should features irrelevant to motion be excluded (`X`, `cvtd_timestamp`,`new_window`, etc.)
+
+```{r LoadingCleaning}
+# Download files.
+trainUrl <- 'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
+testUrl <- 'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
+if(!file.exists('pml-training.csv')) download.file(trainUrl, destfile = 'pml-training.csv')
+if(!file.exists('pml-testing.csv')) download.file(testUrl, destfile = 'pml-testing.csv')
+
+# Read-in data.
+rawdat <- read.csv('pml-training.csv', na.strings = c('',NA))
+
+# Remove NAs based on test set.
+dat <- rawdat[, !is.na(rawdat[1, ])]
+
+# Remove irrelevant columns
+dat <- dat[, -c(1, 3:7)]
+```
+
+
+## Exploratory Data Analysis and Modelling
+
+In this section, several machine learning methods are built and evaluated with cross validation, to find the most promissing model.
+
+### Pre-Treatment of data
+
+There are `r length(dat[1,])` features after cleaning up; however there should be some features correlated.
+
+```{r FurtherCleaning, message=F, warning=F}
+# First look at intercorrelations between variables
+library(caret)
+corMat <- cor(dat[, -c(1,54)])
+heatmap(corMat)                                 # There are some high correlations.
+rmCol <- findCorrelation(corMat, cutoff = 0.8)  # Lowering cutoff reduce volume.
+finaldat <- dat[, -rmCol]
+
+# Recheck correlation.
+rmCol2 <- findCorrelation(cor(finaldat[, -41]), cutoff = 0.8)
+finaldat <- finaldat[, -rmCol2]
+```
+
+Now the features are further reduced to `r length(finaldat[1,])`, which is good to proceed to partition data for cross validation. Here 30 parts are used.
+
+```{r CrossValidation}
+set.seed(123)
+inVal <- createDataPartition(finaldat$classe, p = 0.1, list = F)
+validation <- finaldat[inVal,]
+training <- finaldat[-inVal,]
+
+# Create 30 chunks of subsets.
+set.seed(314)
+idx <- createFolds(training$classe, k = 5)
+```
+
+Several machine learning algorithms, including `lda`, `randomForest`, and `rpart`, are evaluated.
+
+### Linear Discriminant Analysis (LDA) Modelling
+
+```{r LDA, message=F, warning=F}
+library(caret); library(MASS)
+
+# Fit LDA.
+AccLDA <- sapply(seq_along(idx), function(i) {
+        modFit <- lda(classe ~ ., data = training[-idx[[i]],])
+        pred <- predict(modFit, training[idx[[i]],])
+        # In-sample error.
+        mean(pred$class == training[idx[[i]],]$classe)
+})
+# Fit LDA with PCA
+AccLP <- sapply(seq_along(idx), function(i) {
+        modFit <- train(classe ~ ., data = training[-idx[[i]],],
+                        method = 'lda', preProcess = 'pca')
+        pred <- predict(modFit, training[idx[[i]],])
+        # In-sample error.
+        mean(pred == training[idx[[i]],]$classe)
+})
+```
+
+`lda` method results in only `r round(mean(AccLDA), 4)` out of sample accuracy, and even lower (`r round(mean(AccLP), 4)`) with PCA. Hence `lda` is not a good candidate in this case, nor will PCA be preprocessed later.
+
+### Recursive Partitioning (RPart) Modelling
+
+```{r rpart, message=F, warning=F}
+library(rpart)
+# Take 1 example first.
+modFit <- rpart(classe ~ ., data = training[-idx[[1]],], method = 'class')
+pred <- predict(modFit, training[idx[[1]],])
+pred <- sapply(1:dim(pred)[1], function(i) names(which.max(pred[i,])))
+Acc <- mean(pred == training[idx[[1]],]$classe)
+
+# Extract 10 most important variables.
+Pool <- sapply(seq_along(idx), function(i) {
+        modFit <- rpart(classe ~ ., data = training[-idx[[i]],], method = 'class')
+        names(modFit[order(modFit$variable.importance, decreasing = T)]$variable.importance)[1:30]
+})
+Bestrank <- sapply(1:30, function(i) {
+        votes <- table(Pool[i,])
+        winner <- votes[order(votes, decreasing = TRUE)]
+        names(winner[1])
+})
+Best10 <- unique(Bestrank[1:10])
+
+# Re-fit with the selected features.
+training10 <- training[, c(Best10,'classe')]
+AccR <- sapply(seq_along(idx), function(i) {
+        modFit <- rpart(classe ~ ., data = training10[-idx[[i]],])
+        pred <- predict(modFit, training10[idx[[i]],])
+        pred <- sapply(1:dim(pred)[1], function(i) names(which.max(pred[i,])))
+        # In-sample error.
+        mean(pred == training10[idx[[i]],]$classe)
+})
+```
+
+The `rpart` method (fitting all variables) doesn't give great result (`r round(Acc, 4)`). The prediction results get a bit better when taking 10 most important variables (`r round(mean(AccR), 4)`), but still no where close to acceptable.
+
+### Random Forest (RF) Modelling
+
+Direct computing using `rf` method gets super slow. One [RPub publication](https://rpubs.com/arnauddesombre/85938) from Arnaud Desombre has illustrated a common solution to overcome high complexity, and thus contributed to this work greatly (reference here).
+
+```{r rfPlot, message=F, warning=F}
+library(randomForest)
+# One preliminary trial using randomForest(), set ntree=100.
+set.seed(213)
+modFit <- randomForest(classe ~ ., data = training[-idx[[1]],],
+                       ntree = 100, importance = TRUE)
+varImpPlot(modFit, cex = 0.6)
+```
+
+```{r rf}
+# Extract 10 most important variables.
+set.seed(253)
+Pool <- sapply(seq_along(idx), function(i) {
+        modFit <- randomForest(classe ~ ., data = training[-idx[[i]],],
+                               ntree = 100, importance = TRUE)
+        Imp <- modFit$importance[,6]
+        names(Imp[order(Imp, decreasing = TRUE)])[1:30]
+})
+Bestrank <- sapply(1:30, function(i) {
+        votes <- table(Pool[i,])
+        winner <- votes[order(votes, decreasing = TRUE)]
+        names(winner[1])
+})
+Best10 <- unique(Bestrank)[1:10]
+training10 <- training[, c(Best10, 'classe')]
+
+# Train the model with 10 features.
+set.seed(132)
+AccRF <- sapply(seq_along(idx), function(i) {
+        modFit <- randomForest(classe ~ ., data = training10[-idx[[1]],])
+        pred <- predict(modFit, training10[idx[[1]],])
+        mean(pred == training10[idx[[1]],]$classe)
+})
+```
+
+Apparently the `Random Forest` method outcompetes others significantly, by predicting with 10 most important variables (accuracy rate `r round(mean(AccRF), 4)`). The last thing now, as there are only around 30 variables, is to find the optimal number of variables satisfying both accuracy rate and time efficiency.
+
+```{r rfRefine, cache=TRUE}
+# Could take very long!
+set.seed(121)
+AccVSNumVar <- sapply(1:20, function(j){
+        BestJ <- unique(Bestrank)[1:j]
+        trainingJ <- training[, c(BestJ, 'classe')]
+        if(j == 1) print(cat('#Var\tTr.Acc\tTr.SD\tTs.Acc\tTs.SD', '\t'))
+        AccRF <- sapply(seq_along(idx), function(i) {
+                modFit <- randomForest(classe ~ ., data = trainingJ[-idx[[1]],])
+                pred <- predict(modFit, trainingJ[idx[[1]],])
+                Acc <- mean(pred == trainingJ[idx[[1]],]$classe)
+                Pred <- predict(modFit, validation)
+                AccValid <- mean(Pred == validation$classe)
+                c(Train.Accuracy = Acc, Test.Accuracy = AccValid)
+        })
+        print(cat(paste(j, round(mean(AccRF[1,]), 4),
+                        round(sd(AccRF[1,]), 4),
+                        round(mean(AccRF[2,]), 4),
+                        round(sd(AccRF[2,]), 4), sep = '\t'), '\t'))
+        c(j = j, Train.Accuracy = mean(AccRF[1,]),
+          Train.StdDev = sd(AccRF[1,]),
+          Test.Accuracy = mean(AccRF[2,]),
+          Test.StdDev = sd(AccRF[2,]))
+})
+
+# Reformat AccVSNumVar
+rowNames <- rownames(AccVSNumVar)
+AccVSNumVar <- data.frame(t(AccVSNumVar))
+names(AccVSNumVar) <- rowNames
+```
+
+```{r plotGraph, message=F, warning=F}
+# Plot training and predicting accuracies.
+# Confidence intervals are not plotted, as the SDs are small.
+library(reshape2)
+Reshaped <- melt(AccVSNumVar[, c(1,2,4)], id = 'j')
+g <- ggplot(data = Reshaped, aes(x = j, col = variable))
+g <- g + geom_line(aes(y = value))
+g  <- g + labs(x = 'Numbers of Predictors', y = 'Accuracy',
+               title = 'Accuracy Influenced by Numbers of Predictors')
+g
+
+```
+
+As from the analysis, 10 predictors (variables) make a good balance between accuracy and efficiency, which give `r round(AccVSNumVar$Train.Accuracy[10], 4)` in cross validation, and `r round(AccVSNumVar$Test.Accuracy[10], 4)` in testing.
+
+## Final Model and Prediction
+```{r FinalPrediction}
+# Build final model.
+finaldat10 <- finaldat[, c(unique(Bestrank)[1:10], 'classe')]
+modFit <- randomForest(classe ~ ., data = finaldat10)
+
+# Read-in prediction data.
+datTest <- read.csv('pml-testing.csv', na.strings = c('', NA))
+datTest <- datTest[, c(unique(Bestrank)[1:10])]
+
+# Predict data.
+pred <- predict(modFit, newdata = datTest)
+pred
+```
+
+The results are shown above, and passes the [quiz](https://www.coursera.org/learn/practical-machine-learning/exam/3SSqy/course-project-prediction-quiz) with 100% (20/20) success.
+
+
+## Conclusion
+
+The project has succesfully built a reasonably accurate prediction model, utilizing the training dataset and a Random Forest algorithm. From the analysis flowline, prediction with Random Forest outcompeted other methods such as Linear Discriminative Analysis, Recursive Partitioning. 10 most important variables were applied in modeling instead of all, which helped decrease the time complexity without compromising much of accuracy; the 100% prediction in the final test stage highlighted the success of the selected model.

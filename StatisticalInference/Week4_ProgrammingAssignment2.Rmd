@@ -1,0 +1,136 @@
+---
+title: "Statistical Inference Week4 Programming Assignment (2)"
+author: "Guang Yang"
+date: "November 17, 2016"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Statistical Inference Week4 Programming Assignment (2)
+
+## Overview
+
+This report addresses the questions from [Week 4 Assignment](https://www.coursera.org/learn/statistical-inference/peer/3k8j5/statistical-inference-course-project) of __Statistical Inference__, the Course #6 of the Data Science Specialization series, offered by [Coursera.org](https://www.coursera.org/). The report is mainly consist of 2 parts, aiming to discuss the results of the two topics:
+
+* Testing CLT with simulation from exponential distribution;
+
+* __Performing inferential analysis on the ToothGrowth dataset__.
+
+
+## Case Study 2: 
+
+In this case we will take a look at the `ToothGrowth` dataset from `datasets` package.
+
+First let's load and take a quick look at the dataset.
+
+```{r TG_getdata, echo = FALSE}
+# Load dataset
+library(datasets)
+data(ToothGrowth)
+
+# Look at the dataset
+dim(ToothGrowth)
+summary(ToothGrowth)
+str(ToothGrowth)
+boxplot(ToothGrowth$len ~ ToothGrowth$supp, xlab = 'Supplement Type',
+        ylab = 'Tooth Length',
+        main = 'Tooth Lengths with Different Supplement Types')
+```
+
+```{r TG_sep_plot, echo = FALSE}
+boxplot(ToothGrowth$len ~ ToothGrowth$dose, xlab = 'Supplement Dose',
+        ylab = 'Tooth Length',
+        main = 'Tooth Lengths with Different Supplement Doses')
+```
+
+So from the summary we know that the dataset has 3 variables: 
+
+* len  - tooth length: numeric value indicating tooth growth;
+
+* supp - supplement type: 2-component factor (`VC`, `OJ`), 30 entries each;
+
+* dose - dose in mg/day: 3-component numeric factor (`0.5`, `1`, `2`), 20 entries each.
+
+Now we need to perform inferential analysis over the topics:
+
+1. Is vitamin supplement type related to tooth growth?
+
+2. Is vitamin supplement dose related to tooth growth?
+
+For question 1, we'll establish H0: there's no difference between the 2 groups of supplements. Then we'll use t-test to find out p-value, and compare to the cutoff alpha = 0.05 (two sides).
+
+```{r ToothGrowth, echo = FALSE}
+# Is vitamin supplement type related to tooth growth?
+ttest <- t.test(len ~ supp, data = ToothGrowth)
+ttest
+```
+
+As the p-value (`r ttest$p.val`) is greater, and confidence interval (`r round(ttest$conf[1], 2)` ~ `r round(ttest$conf[2], 2)`) passes 0, we therefore have to retain the H0: __difference in supplement types isn't relevant to tooth growth__.
+
+And for question 2, we need to do the same thing, but one pair each time; hence there are 3 null hypotheses to be checked. We'll show the summary of only 1 here.
+
+```{r ToothGrowth2, echo = FALSE}
+# Is vitamin supplement dose related to tooth growth?
+# Here we show comparison between 0.5 and 1.
+dose1 <- ToothGrowth[ToothGrowth$dose == 0.5, 1]
+dose2 <- ToothGrowth[ToothGrowth$dose == 1, 1]
+ttest1 <- t.test(dose1, dose2)
+ttest1
+
+# p-values for the other pairs
+dose3 <- ToothGrowth[ToothGrowth$dose == 2, 1]
+ttest2 <- t.test(dose1, dose3)
+ttest3 <- t.test(dose2, dose3)
+```
+
+As we see, the p-value between dose of 0.5 mg/d and 1 mg/d is `r ttest1$p.val`, way smaller than 0.05; so do the comparisons between 0.5 mg/d and 2 mg/d (`r ttest2$p.val`), and 1 mg/d and 2 mg/d (`r ttest3$p.val`). Hence we can safely reject the H0, and confirm that __the dose does have a relationship with tooth growth__.
+
+
+
+
+
+## Appendix: Codes
+
+### Codes for Data Loading, Summary and Plotting
+
+```{r TG_getdata_App, eval = FALSE}
+# Load dataset
+library(datasets)
+data(ToothGrowth)
+
+# Look at the dataset
+dim(ToothGrowth)
+summary(ToothGrowth)
+str(ToothGrowth)
+boxplot(ToothGrowth$len ~ ToothGrowth$supp, xlab = 'Supplement Type',
+        ylab = 'Tooth Length',
+        main = 'Tooth Lengths with Different Supplement Types')
+boxplot(ToothGrowth$len ~ ToothGrowth$dose, xlab = 'Supplement Dose',
+        ylab = 'Tooth Length',
+        main = 'Tooth Lengths with Different Supplement Doses')
+```
+
+### Codes for T-Test of Supplement Types
+
+```{r ToothGrowth_App, eval = FALSE}
+# Is vitamin supplement type related to tooth growth?
+ttest <- t.test(len ~ supp, data = ToothGrowth)
+ttest
+```
+
+### Codes for T-Tests of Supplement Doses
+
+```{r ToothGrowth2_App, eval = FALSE}
+# Is vitamin supplement dose related to tooth growth?
+# Here we show comparison between 0.5 and 1.
+dose1 <- ToothGrowth[ToothGrowth$dose == 0.5, 1]
+dose2 <- ToothGrowth[ToothGrowth$dose == 1, 1]
+ttest1 <- t.test(dose1, dose2)
+ttest1
+
+# p-values for the other pairs
+dose3 <- ToothGrowth[ToothGrowth$dose == 2, 1]
+ttest2 <- t.test(dose1, dose3)
+ttest3 <- t.test(dose2, dose3)
+```

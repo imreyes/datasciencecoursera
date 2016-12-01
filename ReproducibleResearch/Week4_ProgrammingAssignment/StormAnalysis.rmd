@@ -1,0 +1,231 @@
+---
+title: "StormAnalysis"
+author: "Guang Yang"
+date: "November 13, 2016"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Impact Analysis of Storm Events on Health and Economy in the US from 1950 to 2011
+
+
+## Synopsis
+
+Storm events, like hurricanes and tornadoes, are severe threats to public health and safety, and cause huge economic loss. Level of impact each category of the hazardous events brings is thus a key concern when estimating the outcomes and attempting to minimize the effects.
+
+Numerous investigations and records have provided abundant data from the past, which are valuable sources to perform analyses. This report herein presents the storm events based on the data collected and offered by the U.S. National Oceanic and Atmospheric Administration (NOAA). The database tracks storm events under 48 categories between 1950 and 2011, with detailed information over several key parameters like injuries, fatalities and economic loss.
+
+The primary goals of this report is to find the most hazardous storm event which causes:
+
+__1. Population Injuries and Fatalities__
+
+__2. Property and Crop Damages__
+
+by gathering the total number of each event category.
+
+
+
+
+## Session Info
+
+Session information can be found below:
+
+```{r SessionInfo, echo = TRUE}
+sessionInfo()
+```
+
+
+
+## Data Processing
+
+### Data Acquisition
+
+The [storm data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2), `StormData.csv.bz2`, were obtained from [course website](https://www.coursera.org/learn/reproducible-research/peer/OMZ37/course-project-2); related useful documentaion of the database can be found:
+
+* National Weather Service [Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+
+* National Climatic Data Center Storm Events [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
+
+The events included in the dataset range from 1950 ~ 2011, and throughout all states in the US. We herein only focus on studies of health and economy consequences for each type of all 48 events; hence only some features are loaded.
+
+```{r DataAccessing, echo = TRUE}
+# Download data file from website.
+Url <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
+if(!file.exists('StormData.csv.bz2')) {download.file(Url, destfile = 'StormData.csv.bz2')}
+
+# Unzip the .bz2 file.
+library(R.utils)
+if(!file.exists('StormData.csv')) {bunzip2('StormData.csv.bz2', 'StormData.csv')}
+
+# Read-in data. Note: we only focus on Fatality / Injury / Property Damage
+dat <- read.csv('StormData.csv', na.strings = '', stringsAsFactors = FALSE)[, c('BGN_DATE', 'EVTYPE', 'FATALITIES', 'INJURIES', 'PROPDMG', 'PROPDMGEXP', 'CROPDMG', 'CROPDMGEXP')]
+```
+
+
+### Data Cleaning
+
+* The damage of property and crops are stored with scaling parameters (H, K, M, etc.) with errors; these will be cleaned into a single vector of numeric numbers.
+
+```{r DataCleaning, echo = TRUE}
+# Fill all NAs with 0.
+dat$PROPDMGEXP[is.na(dat$PROPDMGEXP)] <- '0'
+dat$CROPDMGEXP[is.na(dat$CROPDMGEXP)] <- '0'
+
+# Build function to calculate real damage value from two columns.
+RealDamage <- function(val, ord) {
+        ord <- gsub('[Hh]', '2', ord)
+        ord <- gsub('[kK]', '3', ord)
+        ord <- gsub('[mM]', '6', ord)
+        ord <- gsub('B', '9', ord)
+        ord <- gsub('[^a-zA-Z0-9]', '0', ord)
+        val * 10 ^ as.numeric(ord)
+}
+
+# "Merge" the two columns into one, for both property and crop damages.
+Property.Damage <- RealDamage(dat$PROPDMG, dat$PROPDMGEXP)
+Crop.Damage <- RealDamage(dat$CROPDMG, dat$CROPDMGEXP)
+
+# Write-in new data frame.
+storm <- data.frame(Date = dat$BGN_DATE, Type = dat$EVTYPE,
+                    Fatalities = dat$FATALITIES, Injuries = dat$INJURIES,
+                    Property.Damage = Property.Damage, Crop.Damage = Crop.Damage,
+                    stringsAsFactors = FALSE)
+```
+
+
+* The event types are in various forms with typos, which need to be re-formatted and grouped as few categories as possible, based on the defined 48 categories.
+
+```{r DataReMapping, echo = TRUE}
+storm$Type <- tolower(storm$Type)
+storm$Type[grep('marine(.*)(tstm | thunderstorm)', storm$Type)] <- 'Marine Thunderstorm Wind'
+storm$Type[grep('^tstm|((severe )?thunderstorms?)', storm$Type)] <- 'Thunderstorm Wind'
+storm$Type[grep('winte?ry? [^s]', storm$Type)] <- 'Winter Weather'
+storm$Type[grep('winter storms?|thunder ?snow', storm$Type)] <- 'Winter storm'
+storm$Type[grep('cold(|(wind chill)|frost|(low temp)|cool)', storm$Type)] <- 'Extreme Cold/Wind Chill'
+storm$Type[grep('volcan(ic|o)', storm$Type)] <- 'Volcanic Ash'
+storm$Type[grep('funnel|cloud', storm$Type)] <- 'Funnel Cloud'
+storm$Type[grep('slide', storm$Type)] <- 'Debris Flow'
+storm$Type[grep('(coastal|tidal) flood|sea|tides?|swells?|wave', storm$Type)] <- 'Costal Flood'
+storm$Type[grep('dr(y|ie)|drought', storm$Type, ignore.case = TRUE)] <- 'Drought'
+storm$Type[grep('^flood(ing)?|stream|urban|river', storm$Type)] <- 'Flood'
+storm$Type[grep('(wild )?fires?', storm$Type)] <- 'Wild Fire'
+storm$Type[grep('way?ter ?spr?out', storm$Type)] <- 'Water Sprout'
+storm$Type[grep('high  ?wi?nds?', storm$Type)] <- 'High Wind'
+storm$Type[grep('^[^hH].*wi?nds?', storm$Type)] <- 'Strong Wind'
+storm$Type[grep('^wi?nd', storm$Type)] <- 'Strong Wind'
+storm$Type[grep('storm (surge?|tide)', storm$Type)] <- 'Storm Surge/Tide'
+storm$Type[grep('surf', storm$Type)] <- 'High surf'
+storm$Type[grep('warm|heat|((high |record )?temp(.*)( record)?)|hot', storm$Type)] <- 'Heat'
+storm$Type[grep('frost|freeze', storm$Type)] <- 'Frost Freeze'
+storm$Type[grep('( ?flash|local| ?snowmelt| ?street)', storm$Type)] <- 'Flash Flood'
+storm$Type[grep('rip currents?', storm$Type)] <- 'Rip Current'
+storm$Type[grep('hurricane|typhoon', storm$Type)] <- 'Hurricane (Typhoon)'
+storm$Type[grep('tropical', storm$Type)] <- 'Tropical Storm'
+storm$Type[grep('tornadoe?s?|torndao', storm$Type, ignore.case = TRUE)] <- 'Tornado'
+storm$Type[grep('(heavy|winter|record) (may )?snow', storm$Type)] <- 'Heavy Snow'
+storm$Type[grep('snow', storm$Type)] <- 'Heavy Snow'
+storm$Type[grep('ic(e|y)', storm$Type)] <- 'ice storm'
+storm$Type[grep('wet|rain|shower|precip', storm$Type)] <- 'Heavy Rain'
+storm$Type[grep('summary', storm$Type)] <- 'Summary'
+storm$Type[grep('hail', storm$Type)] <- 'Hail'
+storm$Type[grep('blizzard', storm$Type)] <- 'Blizzard'
+storm$Type[grep('avalanc', storm$Type)] <- 'Avalanche'
+storm$Type[grep('water|^[^hHfF].*flood', storm$Type)] <- 'Lakeshore Flood'
+storm$Type[grep('frost|freez', storm$Type)] <- 'Frost/Freeze'
+storm$Type[grep('(heavy|winter) snow', storm$Type)] <- 'Heavy Snow'
+storm$Type[grep('light', storm$Type)] <- 'Lightning'
+storm$Type[grep('(f|v)og', storm$Type)] <- 'Fog'
+storm$Type[grep('dust', storm$Type)] <- 'Dust Storm'
+storm$Type[grep('smoke', storm$Type)] <- 'Dense Smoke'
+```
+
+As a result, 83 groups are created. Although better cleanup is seemingly possible, it takes way more effort to achieve perfectance. It's noteworthy to mention that the categorization process done in another way can change the result; however the effect herein is ignored, as only the No.1 event among many is looked for.
+
+
+
+## Results
+
+### The Most Harmful Event with Respect to Population Health
+
+The injuries population per event are added up by the event type.
+
+```{r Injuries, echo = TRUE}
+injuries <- aggregate(Injuries ~ Type, storm, sum)
+SortedInjuries <- injuries[order(injuries$Injuries, decreasing = TRUE),]
+head(SortedInjuries)
+rpercent <- round(max(injuries$Injuries)/sum(injuries$Injuries)*100, 1)
+```
+
+From the head table above can we immediately find that `Tornado` has caused most injuries, which occupied `r rpercent`% total injuries between 1950 and 2011.
+
+```{r InjuriesPlot, echo = TRUE}
+library(ggplot2)
+ggplot(SortedInjuries[1:10,],
+              aes(x = reorder(Type, -Injuries), y = Injuries)) +
+        geom_bar(stat = 'identity', fill = 'orange') +
+        theme(axis.text.x = element_text(angle = 15)) +
+        labs(x = 'Event Type', y = 'Total Injuries', title = 'Total Injuries of the 10 Most Harmful Events against Polulation Health')
+```
+
+The barplot lists 10 most harmful events causing injuries. Tornado leads the rank, and the injuries it has caused are much higher than thunderstorm wind, head, flood, etc.
+
+Simialrly, fatalities caused by the events are also investigated.
+
+```{r Fatalities, echo = TRUE}
+fatalities <- aggregate(Fatalities ~ Type, storm, sum)
+SortedFatalities <- fatalities[order(fatalities$Fatalities, decreasing = TRUE),]
+head(SortedFatalities)
+rpercent2 <- round(max(fatalities$Fatalities)/sum(fatalities$Fatalities)*100, 1)
+```
+
+Again, tornado is the event which has caused most fatalities (`r rpercent2`% of total), between 1950 and 2011. The barplot is shown below:
+
+```{r FatalitiesPlot, echo = TRUE}
+ggplot(SortedFatalities[1:10,],
+              aes(x = reorder(Type, -Fatalities), y = Fatalities)) +
+        geom_bar(stat = 'identity', fill = 'red') +
+        theme(axis.text.x = element_text(angle = 15)) +
+        labs(x = 'Event Type', y = 'Total Fatalities', title = 'Total Fatalities of the 10 Most Harmful Events against Polulation Health')
+```
+
+
+### The Most Harmful Event with Respect to Economic Consequences
+
+The economic consequences include two aspect: property damage and crop damage. Although these two variables reveal different aspects of financial loss, it's easier and more informative to plot them together.
+
+```{r economic, echo = TRUE}
+property <- aggregate(Property.Damage ~ Type, storm, sum)
+crop <- aggregate(Crop.Damage ~ Type, storm, sum)
+economic <- merge(property, crop, by = 'Type')
+economic$Total.Damage <- economic$Property.Damage + economic$Crop.Damage
+SortedEconomic <- economic[order(economic$Total.Damage, decreasing = TRUE),]
+head(SortedEconomic)
+rpercent3 <- round(max(economic$Total.Damage)/sum(economic$Total.Damage)*100, 1)
+```
+
+From the head table above can we see that `Flood` has caused most financial loss, which occupied `r rpercent3`% total loss between 1950 and 2011. The amount is about 3 times higher than tornado, implying its stronger impact on the land. When focusing on the crop damage, however, `Drought` becomes the most harmful event; however, the property damage caused by droughts is relatively low.
+
+```{r EconomicPlot, echo = TRUE}
+library(reshape2)
+reshaped <- melt(SortedEconomic[1:10,], id = c('Type', 'Total.Damage'), measure.vars = c('Property.Damage', 'Crop.Damage'))
+names(reshaped) <- c('Type', 'Total.Damage', 'Wealth.Identity', 'Amount')
+ggplot(reshaped,
+              aes(x = reorder(Type, -Total.Damage),
+                  y = Amount, fill = Wealth.Identity)) +
+        geom_bar(stat = 'identity') +
+        theme(axis.text.x = element_text(angle = 30)) +
+        labs(x = 'Event Type', y = 'Total Loss ($)', title = 'Total Loss of the 10 Most Economically Harmful Events')
+```
+
+It's quite obvious from the barplot that, in general, the amounts of property damage are higher than crop damage. Indeed, properties like facilities and houses are usually of much greater values than crops, and are harder to "reconstruct". However, the loss of crops will have a great impact on the society, which runs much on foodstuffs.
+
+
+
+## Conclusion
+
+The present report has evaluated the severity of the documented and categorized storm events, by comparing the total amounts of injuries, fatalities, property and crop damages. As shown by the data, tornado is the greatest threat to human health and safety, owing to their huge kinetic energies and broad sweeping area. Thunderstorm wind, heat and flood also cause high hazard to the population. On the other hand, the wealthy and agricultural damages are mostly caused by flood, which has not only physical power, but also water and fluids which account for further and deeper damages to the properties and crops. As a result, the government needs to focus more on topics of predicting above disasters, and preventing the events bringing the worst outcomes in each area.

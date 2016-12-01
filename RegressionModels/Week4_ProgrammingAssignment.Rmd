@@ -1,0 +1,109 @@
+---
+title: 'Insight of Motor Trend: How Transmission Type Affect MPG'
+author: "Guang Yang"
+date: "November 25, 2016"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# __Insight of Motor Trend: How Transmission Type Affect MPG__
+
+##### __Guang Yang__
+
+##### __November 25, 2016__
+
+## Synopsis
+
+Home-owned vihicles are very common nowadays; people who are in the market may always look at the MPG index, which stands for economy and ecology. On the other hand, cars with auto transmission (AT) are much easier to handle, comparing with manual transmission (MT). This case study analyses the impact of AT/MT on MPG --- if MT is better for MPG, or vice versa, and the quantitative difference in MPG by MT/AT.
+
+* The Analysis section holds scripts and text for analytical path of the questions addressed.
+
+* The Executive Summary section concludes the results from Analysis.
+
+* Some additional exploratory data analysis are included in the Appendix section.
+
+
+## Analysis
+
+### Regression of Single Variable (`am`)
+
+```{r LoadingData, echo=TRUE}
+data(mtcars)
+fit1 <- lm(mpg ~ am, data = mtcars)
+summary(fit1)$coef
+pval <- summary(fit1)$coef[1,4]
+ci <- round(confint(fit1)[2,], 4)
+ci
+mpg_diff <- round(summary(fit1)$coef[2,1], 4)
+```
+
+As seen above, the p-value of the slope (`r pval`) is less than 0.05, and the confidence interval (`r ci`) is entirely above 0. Hence the transmission does have an impact on the MPG, despite other parameters of a car.
+
+### Multi-Variable Regression
+
+To select the adjusting variables from the entire vector set, we firstly look at the trend between all pairs of vectors (`Correlations between Variables` in __Appendix__ section). In order not to include too many correlated variables, we choose the variables 1) correlate with `mpg` and 2) NOT positively correlate with other variables. By common sense `wt` is chosen, and the rest is `qsec`. (`cyl` was consiered but didn't pass the nexted model test.)
+
+```{r MultiVarRegression}
+fit2 <- lm(mpg ~ am + wt, data = mtcars)
+fit3 <- lm(mpg ~ am + wt + qsec, data = mtcars)
+fit4 <- lm(mpg ~ am + wt + qsec + cyl, data = mtcars)
+anova(fit1, fit2, fit3, fit4)
+pvalcyl <- anova(fit1, fit2, fit3, fit4)[4,6]
+```
+
+Note all p-values, except the 4th value (`r pvalcyl`), are smaller than 0.05; hence the multi-variable model is not redundant.
+
+```{r Summary}
+summary(fit3)$coef
+ci3 <- round(confint(fit3)[2,], 4)
+mpg_diff3 <- round(summary(fit3)$coef[2,1], 4)
+```
+
+As the confidence interval of slope of `am` (`r ci3`) is exclusively above 0, it's also considered significant.
+
+
+## Executive Summary
+
+The analysis section shows the inferential analysis of the impact on MPG (`mpg`), both by the single vector of transmission (`am`), and by multi-variable modelling including transmission (`am`), weight (`wt`) and 1/4 mile time (`qsec`).
+
+From the result of the analysis section, it's concluded, from both single and multiple vector modelling, that MPG is influenced by transmission type; more specifically, the MPG is improved (increased) by MT. The difference in MPG is `r mpg_diff` mile/gallon from single-variable model, and `r mpg_diff3` mile/gallon from multi-variable model.
+
+
+## Appendix
+
+### Histogram of MPG and Transmission
+
+```{r Histogram}
+library(ggplot2)
+g1 <- ggplot(mtcars, aes(x = ifelse(am == 0, 'AT', 'MT'), y = mpg))
+g1 + geom_boxplot(fill = 'lightblue') +
+        labs(title = 'MPG vs. Transmission', x = 'Transmission', y = 'MPG')
+```
+
+### Correlations between Variables
+
+```{r VectorPlot}
+pairs(mtcars, pch = 19, cex = 0.5, col = 'red')
+```
+
+### Residual Plots
+
+```{r ResidPlot}
+plot(fit3, which = 1)
+plot(fit3, which = 4)
+```
+
+The residual is slightly patterned in a 'V' shape, with couple vehicle models run a bit off of the regression curve. However, the Cook's distance indicates that these points are not necessarily treated as outliers.
+
+```{r ResidDist}
+plot(fit3, which = 2)
+library(car)
+levene <- leveneTest(mpg ~ factor(am), data = mtcars)
+levene
+pvalresid <- round(levene[1,3], 4)
+```
+The QQ plot shows that the residuals are approximately normally distributed. The simple Levene's Test gives p-value of `r pvalresid`, which is smaller than 0.05, indicating approximately normal distribution of the residuals.

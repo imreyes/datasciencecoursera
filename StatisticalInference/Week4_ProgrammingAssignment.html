@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Statistical_Inference_Week4_Programming_Assignment</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>Statistical_Inference_Week4_Programming_Assignment</h1>
+
+<h2>Overview</h2>
+
+<p>This report addresses the questions from <a href="https://www.coursera.org/learn/statistical-inference/peer/3k8j5/statistical-inference-course-project">Week 4 Assignment</a> of <strong>Statistical Inference</strong>, the Course #6 of the Data Science Specialization series, offered by <a href="https://www.coursera.org/">Coursera.org</a>. The report is mainly consist of 2 parts, aiming to discuss the results of the two topics:</p>
+
+<ul>
+<li><p>Testing CLT with simulation from exponential distribution;</p></li>
+<li><p>Performing inferential analysis on the ToothGrowth dataset.</p></li>
+</ul>
+
+<h2>Case Study 1: Simulation of CLT Based on Exponential Equation</h2>
+
+<p>In this project we will investigate the exponential distribution in R and compare it with the Central Limit Theorem (CLT). The exponential distribution can be simulated in R with <code>rexp(n, lambda)</code> where <code>lambda</code> is the rate parameter. The mean of exponential distribution is <code>1/lambda</code> and the standard deviation is also <code>1/lambda</code>. Set <code>lambda = 0.2</code> for all of the simulations. We will investigate the distribution of averages of 40 exponentials. Note that we will do <strong>1000</strong> simulations.</p>
+
+<p>Illustrate via simulation and associated explanatory text the properties of the distribution of the mean of 40 exponentials.</p>
+
+<pre><code class="r">n &lt;- 40                 # Sample Size
+times &lt;- 1000           # Repeat Time
+lambda &lt;- 0.2           # Rate Constant
+
+# Use set.seed() for reproducible purpose.
+set.seed(7)
+means &lt;- replicate(times, mean(rexp(n, lambda)))
+
+# Prepare numeric sequence to plot normal curve.
+LIM &lt;- c(floor(min(means)), ceiling(max(means)))
+x &lt;- seq(floor(min(means)), ceiling(max(means)), length = 1000)
+nd &lt;- dnorm(x, mean = 1/lambda, sd = 1/(lambda*sqrt(n)))
+
+# Make plot.
+library(ggplot2)
+ggplot(as.data.frame(means), aes(x = means)) +
+        geom_histogram(bins = 30, col = &#39;black&#39;, fill = &#39;blue&#39;) +
+        lims(x = LIM) +
+        # Theoretical Mean
+        geom_vline(xintercept = 1/lambda, col = &#39;red&#39;, lwd = 2) +
+        # Sample Mean
+        geom_vline(xintercept = mean(means), col = &#39;yellow&#39;, lwd = 2) +
+        # Theoretical SD
+        geom_vline(xintercept = 1/lambda + c(-1, 1) * 1/(lambda*sqrt(n)), col = &#39;red&#39;) +
+        # Sample SD
+        geom_vline(xintercept = mean(means) + c(-1, 1) * sd(means), col = &#39;yellow&#39;) +
+        # Gaussian PDF
+        geom_line(aes(x = x, y = nd*times/5), col = &#39;green&#39;, lwd = 2) +
+        labs(x = &#39;Means&#39;, y = &#39;Counts&#39;,
+             title = &#39;Distribution of 1000 40-Mean Samples from Exponential Distribution&#39;)
+</code></pre>
+
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_bar).
+</code></pre>
+
+<p><img src="figure/ExpSim40-1.png" alt="plot of chunk ExpSim40"></p>
+
+<pre><code class="r">svar &lt;- round(var(means), 3)
+tvar &lt;- round(1/lambda^2/n, 3)
+print(paste0(&#39;Theoretical variance: &#39;, tvar))
+</code></pre>
+
+<pre><code>## [1] &quot;Theoretical variance: 0.625&quot;
+</code></pre>
+
+<pre><code class="r">print(paste0(&#39;Sample variance: &#39;, svar))
+</code></pre>
+
+<pre><code>## [1] &quot;Sample variance: 0.579&quot;
+</code></pre>
+
+<p>From the above plot we firstly see the <strong>distribution of the sample means</strong> (blue); the top of which stands somewhere between 4 and 5. The above plot:</p>
+
+<ol>
+<li><p>Shows the <strong>sample mean</strong>, <code>mean(means)</code> <strong>(yellow)</strong>  and compare it to the <strong>theoretical mean</strong>, <code>1/lambda</code> <strong>(red)</strong> of the distribution.</p></li>
+<li><p>Shows how variable the sample is and compare it to the theoretical variance of the distribution.</p>
+
+<pre><code>+ By variance: the variance of sample means is 0.579, and that of theoretical means is 0.625.
++ By standard deviation: the standard deviations in the plot are marked in orange (sample) and red (theoretical).
+</code></pre></li>
+<li><p>Shows that the distribution is approximately normal by overlaying the <strong>gaussian PDF</strong> (<code>mean = 1/lambda, sd = 1/(lambda*sqrt(n))</code>, green curve) with the histogram.</p></li>
+</ol>
+
+<p>Just to make a comparison, we then quickly plot another set of 1000 samples from distribution. <em>Note this time there&#39;s only 1 sample each, instead of mean of 40</em>. Let&#39;s take a look at it.</p>
+
+<pre><code class="r">times &lt;- 1000           # Repeat Time
+lambda &lt;- 0.2           # Rate Constant
+
+# Use set.seed() for reproducible purpose.
+set.seed(7)
+means2 &lt;- replicate(times, rexp(1, lambda))
+
+# Prepare numeric sequence to plot normal curve.
+LIM2 &lt;- c(floor(min(means2)), ceiling(max(means2)))
+x2 &lt;- seq(floor(min(means2)), ceiling(max(means2)), length = 1000)
+nd2 &lt;- dnorm(x2, mean = 1/lambda, sd = 1/lambda)
+
+# Make plot.
+library(ggplot2)
+ggplot(as.data.frame(means2), aes(x = means2)) +
+        geom_histogram(bins = 30, col = &#39;black&#39;, fill = &#39;blue&#39;) +
+        lims(x = LIM2) +
+        # Theoretical Mean
+        geom_vline(xintercept = 1/lambda, col = &#39;red&#39;, lwd = 2) +
+        # Sample Mean
+        geom_vline(xintercept = mean(means2), col = &#39;yellow&#39;, lwd = 2) +
+        # Theoretical SD
+        geom_vline(xintercept = 1/lambda + c(-1, 1) * 1/(lambda), col = &#39;red&#39;) +
+        # Sample SD
+        geom_vline(xintercept = mean(means2) + c(-1, 1) * sd(means2), col = &#39;yellow&#39;) +
+        # Gaussian PDF
+        geom_line(aes(x = x2, y = nd2*times*1.5), col = &#39;green&#39;, lwd = 2) +
+        labs(x = &#39;Means&#39;, y = &#39;Counts&#39;,
+             title = &#39;Distribution of 1000 samples from Exponential Distribution&#39;)
+</code></pre>
+
+<p><img src="figure/ExpSim1-1.png" alt="plot of chunk ExpSim1"></p>
+
+<pre><code class="r">svar2 &lt;- round(var(means2), 3)
+tvar2 &lt;- round(1/lambda^2, 3)
+print(paste0(&#39;Theoretical variance: &#39;, tvar2))
+</code></pre>
+
+<pre><code>## [1] &quot;Theoretical variance: 25&quot;
+</code></pre>
+
+<pre><code class="r">print(paste0(&#39;Sample variance: &#39;, svar2))
+</code></pre>
+
+<pre><code>## [1] &quot;Sample variance: 23.425&quot;
+</code></pre>
+
+<p>Now as we see in the above, the distribution is way much more like exponential, rather than normal, even if the variances are similar (25 of theoretical and 23.425 of sample). In comparison, the 40-mean distribution is very normal-like.</p>
+
+<h2>Case Study 2:</h2>
+
+<p>In this case we will take a look at the <code>ToothGrowth</code> dataset from <code>datasets</code> package.</p>
+
+<p>First let&#39;s load and take a quick look at the dataset</p>
+
+<pre><code class="r"># Load dataset
+library(datasets)
+data(ToothGrowth)
+
+# Look at the dataset
+dim(ToothGrowth)
+</code></pre>
+
+<pre><code>## [1] 60  3
+</code></pre>
+
+<pre><code class="r">summary(ToothGrowth)
+</code></pre>
+
+<pre><code>##       len        supp         dose      
+##  Min.   : 4.20   OJ:30   Min.   :0.500  
+##  1st Qu.:13.07   VC:30   1st Qu.:0.500  
+##  Median :19.25           Median :1.000  
+##  Mean   :18.81           Mean   :1.167  
+##  3rd Qu.:25.27           3rd Qu.:2.000  
+##  Max.   :33.90           Max.   :2.000
+</code></pre>
+
+<pre><code class="r">str(ToothGrowth)
+</code></pre>
+
+<pre><code>## &#39;data.frame&#39;:    60 obs. of  3 variables:
+##  $ len : num  4.2 11.5 7.3 5.8 6.4 10 11.2 11.2 5.2 7 ...
+##  $ supp: Factor w/ 2 levels &quot;OJ&quot;,&quot;VC&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ dose: num  0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
+</code></pre>
+
+<pre><code class="r">boxplot(ToothGrowth$len ~ ToothGrowth$supp, xlab = &#39;Supplement Type&#39;,
+        ylab = &#39;Tooth Length&#39;,
+        main = &#39;Tooth Lengths with Different Supplement Types&#39;)
+</code></pre>
+
+<p><img src="figure/TG_getdata-1.png" alt="plot of chunk TG_getdata"></p>
+
+<pre><code class="r">boxplot(ToothGrowth$len ~ ToothGrowth$dose, xlab = &#39;Supplement Dose&#39;,
+        ylab = &#39;Tooth Length&#39;,
+        main = &#39;Tooth Lengths with Different Supplement Doses&#39;)
+</code></pre>
+
+<p><img src="figure/TG_getdata-2.png" alt="plot of chunk TG_getdata"></p>
+
+<p>So from the summary we know that the dataset has 3 variables: </p>
+
+<ul>
+<li><p>len  - tooth length: numeric value indicating tooth growth;</p></li>
+<li><p>supp - supplement type: 2-component factor (<code>VC</code>, <code>OJ</code>), 30 entries each;</p></li>
+<li><p>dose - dose in mg/day: 3-component numeric factor (<code>0.5</code>, <code>1</code>, <code>2</code>), 20 entries each.</p></li>
+</ul>
+
+<p>Now we need to perform inferential analysis over the topics:</p>
+
+<ol>
+<li><p>Is vitamin supplement type related to tooth growth?</p></li>
+<li><p>Is vitamin supplement dose related to tooth growth?</p></li>
+</ol>
+
+<p>For question 1, we&#39;ll establish H0: there&#39;s no difference between the 2 groups of supplements. Then we&#39;ll use t-test to find out p-value, and compare to the cutoff alpha = 0.05 (two sides).</p>
+
+<pre><code class="r"># Is vitamin supplement type related to tooth growth?
+ttest &lt;- t.test(len ~ supp, data = ToothGrowth)
+ttest
+</code></pre>
+
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  len by supp
+## t = 1.9153, df = 55.309, p-value = 0.06063
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.1710156  7.5710156
+## sample estimates:
+## mean in group OJ mean in group VC 
+##         20.66333         16.96333
+</code></pre>
+
+<p>As the p-value (0.0606345) is greater, and confidence interval (-0.17 ~ 7.57) passes 0, we therefore have to retain the H0: <strong>difference in supplement types isn&#39;t relevant to tooth growth</strong>.</p>
+
+<p>And for question 2, we need to do the same thing, but one pair each time; hence there are 3 null hypotheses to be checked. We&#39;ll show the summary of only 1 here.</p>
+
+<pre><code class="r"># Is vitamin supplement dose related to tooth growth?
+# Here we show comparison between 0.5 and 1.
+dose1 &lt;- ToothGrowth[ToothGrowth$dose == 0.5, 1]
+dose2 &lt;- ToothGrowth[ToothGrowth$dose == 1, 1]
+ttest1 &lt;- t.test(dose1, dose2)
+ttest1
+</code></pre>
+
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  dose1 and dose2
+## t = -6.4766, df = 37.986, p-value = 1.268e-07
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -11.983781  -6.276219
+## sample estimates:
+## mean of x mean of y 
+##    10.605    19.735
+</code></pre>
+
+<pre><code class="r"># p-values for the other pairs
+dose3 &lt;- ToothGrowth[ToothGrowth$dose == 2, 1]
+ttest2 &lt;- t.test(dose1, dose3)
+ttest3 &lt;- t.test(dose2, dose3)
+</code></pre>
+
+<p>As we see, the p-value between dose of 0.5 mg/d and 1 mg/d is 1.2683007 &times; 10<sup>-7</sup>, way smaller than 0.05; so do the comparisons between 0.5 mg/d and 2 mg/d (4.397525 &times; 10<sup>-14</sup>), and 1 mg/d and 2 mg/d (1.9064295 &times; 10<sup>-5</sup>). Hence we can safely reject the H0, and confirm that <strong>the dose does have a relationship with tooth growth</strong>.</p>
+
+</body>
+
+</html>

@@ -1,25 +1,29 @@
 ---
 title: "Gas Pollution in the US"
 author: "Guang Yang"
-date: "December 6, 2016"
+date: "December 7, 2016"
 output: html_document
 runtime: shiny
 ---
 
 
-### __Note: This web app may cost 2-5 minutes to load and manipulate large datasets; please be patient while contents are under preparation. Scroll down to view the progress indicator on the bottom right corner of the plot area.__
+##### __Note: If there is a connection problem, please try a couple of times, or email to `guangyang11231987@gmail.com`. Thank you!__
 
 ## Introduction
 
-This document fetches the annual pollution data from [EPA Air-Data webpage](https://www.epa.gov/outdoor-air-quality-data), and interactively marks concentrations of `Sulfur Dioxide`, `Carbon Monoxide`, and `Ozone`, by the coordinates of the monitors throughout the US. For more information of [data downloading](https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/download_files.html) or [data documentation](https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/FileFormats.html#_annual_summary_files), please follow the links to the EPA websites.
+This document originates some cleaned data from the annual pollution data from [EPA Air-Data webpage](https://www.epa.gov/outdoor-air-quality-data), and interactively marks concentrations of `Sulfur Dioxide`, `Carbon Monoxide`, and `Ozone`, by the coordinates of the monitors throughout the US. The [DataGallery.rda](https://github.com/imreyes/datasciencecoursera/blob/master/DevelopingDataProduct/Week2_ProgrammingAssignment/DataGallery.rda) stores the list named `data.gallery` which contains the necessary data chunks for mapping. Codes to generate the list is stored in [GasPollution_DataProcessor.R](https://github.com/imreyes/datasciencecoursera/blob/master/DevelopingDataProduct/Week2_ProgrammingAssignment/GasPollution_DataProcessor.R) file. For more information of [data downloading](https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/download_files.html) or [data documentation](https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/FileFormats.html#_annual_summary_files), please follow the links to the EPA websites.
 
 This R Markdown document is made interactive using Shiny. To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
 
 ```{r page, echo=FALSE}
 library(leaflet)
 library(shiny)
-library(knitr)
-
+if(!file.exists('DataGallery.rda')) {
+        Url <- 'https://github.com/imreyes/datasciencecoursera/raw/master/DevelopingDataProduct/Week2_ProgrammingAssignment/DataGallery.rda'
+        download.file(Url, destfile = 'Datagallery.rda')
+}
+load('DataGallery.rda')
+        
 ui <- shinyUI(fluidPage(
         sidebarLayout(
                 sidebarPanel(
@@ -41,84 +45,6 @@ ui <- shinyUI(fluidPage(
 ))
 
 server <- shinyServer(function(input, output, session) {
-        # Add progress indicator for data download.
-        withProgress(message = 'Fetching Data', value = 0, {
-                if(!dir.exists('./Data_Storage')) dir.create('./Data_Storage')
-                setwd('./Data_Storage')
-                for(year in 1990:2016) {
-                        # Download and unzip file.
-                        incProgress(1/27, detail = paste('Downloading data of', year))
-                        filename <- paste0('annual_all_', year, '.csv')
-                        if(!file.exists(filename)) {
-                                Url <- paste0('https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/annual_all_',
-                                              year, '.zip')
-                                archivename <- paste0(year, '.zip')
-                                download.file(Url, destfile = archivename,
-                                              quiet = TRUE)
-                                unzip(archivename)
-                                unlink(archivename)
-                        }
-                }
-        })
-        
-        # Add progress indicator for data reading.
-        withProgress(message = 'Reading Data', value = 0, {
-                # Initialize data list.
-                data.gallery <- list()
-                
-                data.gallery <- sapply(1990:2016, function(year) {
-                        # Update progress indicator
-                        incProgress(1/27,
-                                    detail = paste('Reading data of', year))
-                        # Read file.
-                        filename <- paste0('annual_all_', year, '.csv')
-                        dat <- read.csv(filename)[, c(6,7,9,10,28)]
-                        # Create sub-list.
-                        sublist <- list()
-                        
-                        # SO2 subset.
-                        subdat <- dat[grep('Sulfur dioxide',
-                                           dat$Parameter.Name), ]
-                        subdat <- subdat[grep('24', subdat$Sample.Duration), ]
-                        # Re-form data with unique coordinates.
-                        reform <- aggregate(subdat$Arithmetic.Mean, 
-                                            by = list(lat = subdat$Latitude,
-                                                      lng = subdat$Longitude),
-                                            FUN = mean)
-                        delIdx <- which(reform$lat == 0)
-                        if(!(length(delIdx) == 0)) reform <- reform[-delIdx, ]
-                        sublist$SO2 <- reform
-                        
-                        # CO subset.
-                        subdat <- dat[grep('Carbon monoxide',
-                                           dat$Parameter.Name), ]
-                        subdat <- subdat[grep('8', subdat$Sample.Duration), ]
-                        reform <- aggregate(subdat$Arithmetic.Mean, 
-                                            by = list(lat = subdat$Latitude,
-                                                      lng = subdat$Longitude),
-                                            FUN = mean)
-                        delIdx <- which(reform$lat == 0)
-                        if(!(length(delIdx) == 0)) reform <- reform[-delIdx, ]
-                        sublist$CO <- reform
-                        
-                        # O3 subset.
-                        subdat <- dat[grep('Ozone', dat$Parameter.Name), ]
-                        subdat <- subdat[grep('8', subdat$Sample.Duration), ]
-                        reform <- aggregate(subdat$Arithmetic.Mean, 
-                                            by = list(lat = subdat$Latitude,
-                                                      lng = subdat$Longitude),
-                                            FUN = mean)
-                        delIdx <- which(reform$lat == 0)
-                        if(!(length(delIdx) == 0)) reform <- reform[-delIdx, ]
-                        sublist$O3 <- reform
-                        
-                        sublist
-                })
-        })
-        setwd('..')
-        # Data processing and outputing.
-        library(leaflet)
-        
         output$plot <- renderLeaflet({
                 # Get the subset to plot.
                 year <- input$SliderYear - 1990

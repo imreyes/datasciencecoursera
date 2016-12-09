@@ -1,0 +1,74 @@
+---
+title: "Gas and Metal Dust Pollution in the US (1990 - 2016)"
+author: "Guang Yang"
+date: "December 9, 2016"
+output: ioslides_presentation
+---
+
+## Introduction
+
+This ioslides presentation serves to further document and show the [shiny web application of the same name](https://imreyes.shinyapps.io/GasMetalPollution/).
+
+The web application visualizes pollutions of 3 types of gases and 13 types of metal dusts, by states in the US.
+
+The 13 types of metal dusts are: `Barium (Ba)`, `Beryllium (Be)`, `Cadmium (Cd)`, `Calcium (Ca)`, `Chromium (Cr)`, `Copper (Cu)`, `Iron (Fe)`, `Lead (Pb)`, `Manganese (Mn)`, `Molybdenum (Mo)`, `Nickel (Ni)`, `Vanadium (V)`, `Zinc (Zn)`.
+
+The 3 types of gases are: `Sulfur dioxide`, `Carbon monoxide`, `Ozone`.
+
+## Sources of Data
+
+This document originates some cleaned data from the annual pollution data from [EPA Air-Data webpage](https://www.epa.gov/outdoor-air-quality-data). For more information of [data downloading](https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/download_files.html) or [data documentation](https://aqsdr1.epa.gov/aqsweb/aqstmp/airdata/FileFormats.html#_annual_summary_files), please follow the links to the EPA websites.
+
+The [DataGalleryGasMetal.rda](https://github.com/imreyes/datasciencecoursera/blob/master/DevelopingDataProduct/Week4_ProgrammingAssignment/DataGalleryGasMetal.rda) stores the list named `data.gallery.metal` which contains the necessary data chunks for mapping. Codes to generate the list is stored in [GasMetalPollution_DataProcessor.R](https://github.com/imreyes/datasciencecoursera/blob/master/DevelopingDataProduct/Week4_ProgrammingAssignment/GasMetalPollution_DataProcessor.R) file. 
+
+Hovering on the map will show relevant data, including `state name`, `pollution level (Mean)` and `Number of monitor sites in the state (# of Sites)`.
+
+```{r load data, echo=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(plotly))
+
+# Fetch the data object from the web.
+if(!file.exists('DataGalleryGasMetal.rda')) {
+        Url <- 'https://github.com/imreyes/datasciencecoursera/raw/master/DevelopingDataProduct/Week4_ProgrammingAssignment/DataGalleryGasMetal.rda'
+        download.file(Url, destfile = 'DataGalleryGasMetal.rda')
+}
+load('DataGalleryGasMetal.rda')
+
+# Make white border between states.
+border <- list(color = toRGB('black'), lwd = 2)
+# Specify Map options.
+opt <- list(scope = 'usa', projection = list(type = 'albers usa'),
+            showlakes = TRUE, lakecolor = toRGB('white'))
+
+```
+
+## Cadmium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Cd_2015, echo=FALSE, warning=FALSE}
+# Read-in data. 
+# rows are 4 variables of 13 chemicals; columns are year minus 1989.
+dgm <- as.data.frame(t(data.gallery.all)[26, 4*2+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Cadmium Pollution in 2015 (Unit: mg/m3)', geo = opt)
+```
+
+## Example: Ozone Pollution in 1990
+
+Note: not all states have reported data.
+
+```{r Cd_1990, echo=FALSE, warning=FALSE}
+# Read-in data. 
+# rows are 4 variables of 13 chemicals; columns are year minus 1989.
+dgm <- as.data.frame(t(data.gallery.all)[1, 4*15+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Ozone Pollution in 1990 (ppm)', geo = opt)
+```

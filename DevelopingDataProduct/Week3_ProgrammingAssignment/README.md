@@ -1,5 +1,7 @@
 # README.md
 
+#### __The presentation is also published on RPub__, please follow the [link to the published presentation](http://rpubs.com/imreyes/233962).
+
 ## Introduction
 
 This ioslides presentation depicts levels of pollutions of metal dusts, by states in the US.

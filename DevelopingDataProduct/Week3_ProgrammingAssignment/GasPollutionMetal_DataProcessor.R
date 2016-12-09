@@ -20,7 +20,11 @@ data.gallery.metal <- list()
 data.gallery.metal <- sapply(1990:2016, function(year) {
         # Read file.
         filename <- paste0('annual_all_', year, '.csv')
+        state.abb[51:55] <- c('PR', 'DC', 'GU', 'VI', 'MX')
+        state.name[51:55] <- c('Puerto Rico', 'District Of Columbia', 'Guam',
+                               'Virgin Islands', 'Country Of Mexico')
         dat <- read.csv(filename, stringsAsFactors = FALSE)[, c(9,10,28,51)]
+
         # Create sub-list.
         sublist <- list()
         
@@ -38,6 +42,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Ba <- reform
         
         # Be subset.
@@ -53,6 +60,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Be <- reform
         
         # Cd subset.
@@ -67,6 +77,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Cd <- reform
         
         # Ca subset.
@@ -81,6 +94,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Ca <- reform
         
         # Cr subset.
@@ -95,6 +111,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Cr <- reform
         
         # Cu subset.
@@ -109,6 +128,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Cu <- reform
         
         # Fe subset.
@@ -123,6 +145,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Fe <- reform
         
         # Pb subset.
@@ -137,6 +162,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Pb <- reform
         
         # Mn subset.
@@ -151,6 +179,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Mn <- reform
         
         # Mo subset.
@@ -165,6 +196,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Mo <- reform
         
         # Ni subset.
@@ -179,6 +213,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Ni <- reform
         
         # V subset.
@@ -193,6 +230,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$V <- reform
         
         # Zn subset.
@@ -207,6 +247,9 @@ data.gallery.metal <- sapply(1990:2016, function(year) {
         names(reform) <- c('State', 'Mean', 'Num.Monitors')
         reform$hover <- with(reform, paste(State, '<br>', 'Mean:', Mean,
                                            '<br>', '# of Sites:', Num.Monitors))
+        reform$State <- sapply(reform$State, function(i) {
+                return(state.abb[grep(i, state.name)])
+        })
         sublist$Zn <- reform
         
         sublist

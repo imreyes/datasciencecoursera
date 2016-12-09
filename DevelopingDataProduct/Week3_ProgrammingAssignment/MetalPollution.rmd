@@ -11,9 +11,9 @@ This ioslides presentation depicts levels of pollutions of metal dusts, by state
 
 There are 13 types of metal dusts: `Barium (Ba)`, `Beryllium (Be)`, `Cadmium (Cd)`, `Calcium (Ca)`, `Chromium (Cr)`, `Copper (Cu)`, `Iron (Fe)`, `Lead (Pb)`, `Manganese (Mn)`, `Molybdenum (Mo)`, `Nickel (Ni)`, `Vanadium (V)`, `Zinc (Zn)`.
 
-Data on map are averaged measurements from all monitors in the same state, and with unit of `mg/m^3^`.
+Data on map are averaged measurements from all monitors in the same state, and with unit of `mg/m^3`.
 
-Processed R data object (`DataGalleryMetal.rda`) contains all data from 1990 to 2016; only the data of 2016 is shown in this presentation, with `Cadmium (Cd)` and `Lead (Pb)` maps in 1990 is provided for comparison, right after their maps of 2016.
+Processed R data object (`DataGalleryMetal.rda`) contains all data from 1990 to 2016; only the data of 2015 is shown in this presentation (data of 2016 is incomplete), with `Cadmium (Cd)` and `Lead (Pb)` maps in 1990 is provided for comparison, right after their maps of 2015.
 
 ## Sources of Data
 
@@ -23,9 +23,8 @@ This document originates some cleaned data from the annual pollution data from [
 
 The [DataGalleryMetal.rda](https://github.com/imreyes/datasciencecoursera/blob/master/DevelopingDataProduct/Week3_ProgrammingAssignment/DataGalleryMetal.rda) stores the list named `data.gallery.metal` which contains the necessary data chunks for mapping. Codes to generate the list is stored in [GasPollutionMetal_DataProcessor.R](https://github.com/imreyes/datasciencecoursera/blob/master/DevelopingDataProduct/Week3_ProgrammingAssignment/GasPollutionMetal_DataProcessor.R) file. 
 
-
-```{r page, echo=FALSE}
-library(plotly)
+```{r load data, echo=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(plotly))
 
 # Fetch the data object from the web.
 if(!file.exists('DataGalleryMetal.rda')) {
@@ -33,4 +32,243 @@ if(!file.exists('DataGalleryMetal.rda')) {
         download.file(Url, destfile = 'DataGalleryMetal.rda')
 }
 load('DataGalleryMetal.rda')
+
+# Make white border between states.
+border <- list(color = toRGB('black'), lwd = 2)
+# Specify Map options.
+opt <- list(scope = 'usa', projection = list(type = 'albers usa'),
+            showlakes = TRUE, lakecolor = toRGB('white'))
+
 ```
+
+## Cadmium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Cd_2015, echo=FALSE, warning=FALSE}
+# Read-in data. 
+# rows are 4 variables of 13 chemicals; columns are year minus 1989.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*2+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Cadmium Pollution in 2015', geo = opt)
+```
+
+## Cadmium Pollution in 1990
+
+Note: not all states have reported data.
+
+```{r Cd_1990, echo=FALSE, warning=FALSE}
+# Read-in data. 
+# rows are 4 variables of 13 chemicals; columns are year minus 1989.
+dgm <- as.data.frame(t(data.gallery.metal)[1, 4*2+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Cadmium Pollution in 1990', geo = opt)
+```
+
+## Lead Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Pb_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*7+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Lead Pollution in 2015', geo = opt)
+```
+
+## Lead Pollution in 1990
+
+Note: not all states have reported data.
+
+```{r Pb_1990, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[1, 4*7+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Lead Pollution in 1990', geo = opt)
+```
+
+## Barium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Ba_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*0+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Barium Pollution in 2015', geo = opt)
+```
+
+## Beryllium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Be_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*1+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Barium Pollution in 2015', geo = opt)
+```
+
+## Calcium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Ca_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*3+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Calcium Pollution in 2015', geo = opt)
+```
+
+## Chromium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Cr_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*4+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Chromium Pollution in 2015', geo = opt)
+```
+
+## Copper Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Cu_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*5+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Copper Pollution in 2015', geo = opt)
+```
+
+## Iron Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Fe_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*6+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Iron Pollution in 2015', geo = opt)
+```
+
+## Manganese Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Mn_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*8+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Manganese Pollution in 2015', geo = opt)
+```
+
+## Molybdenum Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Mo_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*9+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Molybdenum Pollution in 2015', geo = opt)
+```
+
+## Vanadium Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Ni_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*11+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Vanadium Pollution in 2015', geo = opt)
+```
+
+## Zinc Pollution in 2015
+
+Note: not all states have reported data.
+
+```{r Zn_2015, echo=FALSE, warning=FALSE}
+# Read-in data.
+# rows are 4 variables of 13 chemicals; columns are year minus 1990.
+dgm <- as.data.frame(t(data.gallery.metal)[26, 4*12+1:4])
+names(dgm) <- c('State', 'Mean', 'Num.Monitors', 'hover')
+# Plot map
+plot_ly(z = dgm$Mean, text = dgm$hover, locations = dgm$State,
+        type = 'choropleth', locationmode = 'USA-states',
+        color = dgm$Mean, colors = 'Blues', marker = list(line = border)) %>%
+        layout(title = 'Zinc Pollution in 2015', geo = opt)
+```
+
+## Conclusion
+
+* Lead and cadmium pollution is greately reduced (over 10-fold) over the 26 years; the cadmium pollution is significant in Missouri.
+
+* Texas, Missouri, Michigan suffered most from pollution of metal dusts, in general. Minnesota and Kentucky also bore high-level pollution of specific metal dust, comparing to other states.
+
+# Thank you!

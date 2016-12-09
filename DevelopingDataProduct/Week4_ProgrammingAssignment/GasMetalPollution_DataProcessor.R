@@ -56,4 +56,4 @@ data.gallery.all <- sapply(1990:2016, function(year) {
 setwd('..')
 unlink('Data_Storage', recursive = TRUE)
 # Save list in .RData file for further read.
-save(data.gallery.metal, file = 'DataGalleryGasMetal.rda')
+save(data.gallery.all, file = 'DataGalleryGasMetal.rda')
